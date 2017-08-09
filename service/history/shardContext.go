@@ -177,7 +177,7 @@ Create_Loop:
 						s.closeShard()
 					}
 				}
-			case *shared.WorkflowExecutionAlreadyStartedError:
+			case *shared.WorkflowExecutionAlreadyStartedError, *shared.ServiceBusyError:
 			default:
 				{
 					// We have no idea if the write failed or will eventually make it to
@@ -252,7 +252,7 @@ Update_Loop:
 						s.closeShard()
 					}
 				}
-			case *persistence.ConditionFailedError:
+			case *persistence.ConditionFailedError, *shared.ServiceBusyError:
 			default:
 				{
 					// We have no idea if the write failed or will eventually make it to

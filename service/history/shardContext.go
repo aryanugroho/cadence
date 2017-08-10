@@ -74,6 +74,8 @@ type (
 		transferSequenceNumber    int64
 		maxTransferSequenceNumber int64
 		transferMaxReadLevel      int64
+		delayWrites               bool
+		writeBackoff              time.Duration
 	}
 )
 
@@ -163,7 +165,9 @@ Create_Loop:
 	for attempt := 0; attempt < conditionalRetryCount; attempt++ {
 		currentRangeID := s.getRangeID()
 		request.RangeID = currentRangeID
+		s.delayWriteIfNeeded()
 		response, err := s.executionManager.CreateWorkflowExecution(request)
+		s.updateWriteBackoff(err)
 		if err != nil {
 			switch err.(type) {
 			case *persistence.ShardOwnershipLostError:
@@ -238,7 +242,9 @@ Update_Loop:
 	for attempt := 0; attempt < conditionalRetryCount; attempt++ {
 		currentRangeID := s.getRangeID()
 		request.RangeID = currentRangeID
+		s.delayWriteIfNeeded()
 		err := s.executionManager.UpdateWorkflowExecution(request)
+		s.updateWriteBackoff(err)
 		if err != nil {
 			switch err.(type) {
 			case *persistence.ShardOwnershipLostError:
@@ -425,6 +431,30 @@ func (s *shardContextImpl) allocateTimerIDsLocked(timerTasks []persistence.Task)
 			persistence.GetVisibilityTSFrom(task), task.GetTaskID(), s.shardInfo.TimerAckLevel)
 	}
 	return nil
+}
+
+func (s *shardContextImpl) updateWriteBackoff(err error) {
+	switch err.(type) {
+	case *shared.InternalServiceError, *shared.ServiceBusyError, *persistence.TimeoutError:
+		{
+			s.delayWrites = true
+			s.writeBackoff *= 2
+			if s.writeBackoff > s.config.MaxWriteBackoffInterval {
+				s.writeBackoff = s.config.MaxWriteBackoffInterval
+			}
+		}
+	default:
+		{
+			s.delayWrites = false
+			s.writeBackoff = s.config.InitialWriteBackoffInterval
+		}
+	}
+}
+
+func (s *shardContextImpl) delayWriteIfNeeded() {
+	if s.delayWrites {
+		time.Sleep(s.writeBackoff)
+	}
 }
 
 func (s *shardContextImpl) GetTimeSource() common.TimeSource {

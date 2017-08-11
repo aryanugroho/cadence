@@ -295,8 +295,7 @@ const (
 		`and workflow_id = ? ` +
 		`and run_id = ? ` +
 		`and visibility_ts = ? ` +
-		`and task_id = ? ` +
-		`IF next_event_id = ?`
+		`and task_id = ? `
 
 	templateUpdateActivityInfoQuery = `UPDATE executions ` +
 		`SET activity_map[ ? ] =` + templateActivityInfoType + ` ` +
@@ -306,8 +305,7 @@ const (
 		`and workflow_id = ? ` +
 		`and run_id = ? ` +
 		`and visibility_ts = ? ` +
-		`and task_id = ? ` +
-		`IF next_event_id = ?`
+		`and task_id = ? `
 
 	templateUpdateTimerInfoQuery = `UPDATE executions ` +
 		`SET timer_map[ ? ] =` + templateTimerInfoType + ` ` +
@@ -317,8 +315,7 @@ const (
 		`and workflow_id = ? ` +
 		`and run_id = ? ` +
 		`and visibility_ts = ? ` +
-		`and task_id = ? ` +
-		`IF next_event_id = ?`
+		`and task_id = ? `
 
 	templateUpdateChildExecutionInfoQuery = `UPDATE executions ` +
 		`SET child_executions_map[ ? ] =` + templateChildExecutionInfoType + ` ` +
@@ -328,8 +325,7 @@ const (
 		`and workflow_id = ? ` +
 		`and run_id = ? ` +
 		`and visibility_ts = ? ` +
-		`and task_id = ? ` +
-		`IF next_event_id = ?`
+		`and task_id = ? `
 
 	templateUpdateRequestCancelInfoQuery = `UPDATE executions ` +
 		`SET request_cancel_map[ ? ] =` + templateRequestCancelInfoType + ` ` +
@@ -339,8 +335,7 @@ const (
 		`and workflow_id = ? ` +
 		`and run_id = ? ` +
 		`and visibility_ts = ? ` +
-		`and task_id = ? ` +
-		`IF next_event_id = ?`
+		`and task_id = ? `
 
 	templateDeleteActivityInfoQuery = `DELETE activity_map[ ? ] ` +
 		`FROM executions ` +
@@ -350,8 +345,7 @@ const (
 		`and workflow_id = ? ` +
 		`and run_id = ? ` +
 		`and visibility_ts = ? ` +
-		`and task_id = ? ` +
-		`IF next_event_id = ?`
+		`and task_id = ? `
 
 	templateDeleteTimerInfoQuery = `DELETE timer_map[ ? ] ` +
 		`FROM executions ` +
@@ -361,8 +355,7 @@ const (
 		`and workflow_id = ? ` +
 		`and run_id = ? ` +
 		`and visibility_ts = ? ` +
-		`and task_id = ? ` +
-		`IF next_event_id = ?`
+		`and task_id = ? `
 
 	templateDeleteChildExecutionInfoQuery = `DELETE child_executions_map[ ? ] ` +
 		`FROM executions ` +
@@ -372,8 +365,7 @@ const (
 		`and workflow_id = ? ` +
 		`and run_id = ? ` +
 		`and visibility_ts = ? ` +
-		`and task_id = ? ` +
-		`IF next_event_id = ?`
+		`and task_id = ? `
 
 	templateDeleteRequestCancelInfoQuery = `DELETE request_cancel_map[ ? ] ` +
 		`FROM executions ` +
@@ -383,8 +375,7 @@ const (
 		`and workflow_id = ? ` +
 		`and run_id = ? ` +
 		`and visibility_ts = ? ` +
-		`and task_id = ? ` +
-		`IF next_event_id = ?`
+		`and task_id = ? `
 
 	templateDeleteWorkflowExecutionQuery = `DELETE FROM executions ` +
 		`WHERE shard_id = ? ` +
@@ -971,8 +962,7 @@ func (d *cassandraPersistence) UpdateWorkflowExecution(request *UpdateWorkflowEx
 		executionInfo.WorkflowID,
 		executionInfo.RunID,
 		defaultVisibilityTimestamp,
-		rowTypeExecutionTaskID,
-		request.Condition)
+		rowTypeExecutionTaskID)
 
 	d.createTransferTasks(batch, request.TransferTasks, executionInfo.DomainID, executionInfo.WorkflowID,
 		executionInfo.RunID, cqlNowTimestamp)
@@ -1650,8 +1640,7 @@ func (d *cassandraPersistence) updateActivityInfos(batch *gocql.Batch, activityI
 			workflowID,
 			runID,
 			defaultVisibilityTimestamp,
-			rowTypeExecutionTaskID,
-			condition)
+			rowTypeExecutionTaskID)
 	}
 
 	if deleteInfo != nil {
@@ -1663,8 +1652,7 @@ func (d *cassandraPersistence) updateActivityInfos(batch *gocql.Batch, activityI
 			workflowID,
 			runID,
 			defaultVisibilityTimestamp,
-			rowTypeExecutionTaskID,
-			condition)
+			rowTypeExecutionTaskID)
 	}
 }
 
@@ -1684,8 +1672,7 @@ func (d *cassandraPersistence) updateTimerInfos(batch *gocql.Batch, timerInfos [
 			workflowID,
 			runID,
 			defaultVisibilityTimestamp,
-			rowTypeExecutionTaskID,
-			condition)
+			rowTypeExecutionTaskID)
 	}
 
 	for _, t := range deleteInfos {
@@ -1697,8 +1684,7 @@ func (d *cassandraPersistence) updateTimerInfos(batch *gocql.Batch, timerInfos [
 			workflowID,
 			runID,
 			defaultVisibilityTimestamp,
-			rowTypeExecutionTaskID,
-			condition)
+			rowTypeExecutionTaskID)
 	}
 }
 
@@ -1719,8 +1705,7 @@ func (d *cassandraPersistence) updateChildExecutionInfos(batch *gocql.Batch, chi
 			workflowID,
 			runID,
 			defaultVisibilityTimestamp,
-			rowTypeExecutionTaskID,
-			condition)
+			rowTypeExecutionTaskID)
 	}
 
 	// deleteInfo is the initiatedID for ChildInfo being deleted
@@ -1733,8 +1718,7 @@ func (d *cassandraPersistence) updateChildExecutionInfos(batch *gocql.Batch, chi
 			workflowID,
 			runID,
 			defaultVisibilityTimestamp,
-			rowTypeExecutionTaskID,
-			condition)
+			rowTypeExecutionTaskID)
 	}
 }
 
@@ -1752,8 +1736,7 @@ func (d *cassandraPersistence) updateRequestCancelInfos(batch *gocql.Batch, requ
 			workflowID,
 			runID,
 			defaultVisibilityTimestamp,
-			rowTypeExecutionTaskID,
-			condition)
+			rowTypeExecutionTaskID)
 	}
 
 	// deleteInfo is the initiatedID for RequestCancelInfo being deleted
@@ -1766,8 +1749,7 @@ func (d *cassandraPersistence) updateRequestCancelInfos(batch *gocql.Batch, requ
 			workflowID,
 			runID,
 			defaultVisibilityTimestamp,
-			rowTypeExecutionTaskID,
-			condition)
+			rowTypeExecutionTaskID)
 	}
 }
 
